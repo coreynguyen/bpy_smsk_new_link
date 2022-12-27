@@ -602,7 +602,8 @@ def quatToMatrix3(q = [0.0, 0.0, 0.0, 0.0]):
     sqz = q[2]*q[2]
 
     # invs (inverse square length) is only required if quaternion is not already normalised
-    invs = 1.0 / (sqx + sqy + sqz + sqw)
+    invs = 1.0
+    if (sqx + sqy + sqz + sqw) > 0.0: invs = 1.0 / (sqx + sqy + sqz + sqw)
     m00 = ( sqx - sqy - sqz + sqw)*invs # since sqw + sqx + sqy + sqz =1/invs*invs
     m11 = (-sqx + sqy - sqz + sqw)*invs
     m22 = (-sqx - sqy + sqz + sqw)*invs
