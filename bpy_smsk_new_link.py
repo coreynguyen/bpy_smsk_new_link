@@ -530,24 +530,24 @@ class matrix3:
                 ]
         elif (type(B).__name__ == "tuple" or type(B).__name__ == "list"):
             C.row1 = [
-                self.row1[0] * [0][0] + self.row1[1] * [1][0] + self.row1[2] * [2][0] + A_row1_3 * [3][0],
-                self.row1[0] * [0][1] + self.row1[1] * [1][1] + self.row1[2] * [2][1] + A_row1_3 * [3][1],
-                self.row1[0] * [0][2] + self.row1[1] * [1][2] + self.row1[2] * [2][2] + A_row1_3 * [3][2]
+                self.row1[0] * B[0][0] + self.row1[1] * B[1][0] + self.row1[2] * B[2][0] + A_row1_3 * B[3][0],
+                self.row1[0] * B[0][1] + self.row1[1] * B[1][1] + self.row1[2] * B[2][1] + A_row1_3 * B[3][1],
+                self.row1[0] * B[0][2] + self.row1[1] * B[1][2] + self.row1[2] * B[2][2] + A_row1_3 * B[3][2]
                 ]
             C.row2 = [
-                self.row2[0] * [0][0] + self.row2[1] * [1][0] + self.row2[2] * [2][0] + A_row2_3 * [3][0],
-                self.row2[0] * [0][1] + self.row2[1] * [1][1] + self.row2[2] * [2][1] + A_row2_3 * [3][1],
-                self.row2[0] * [0][2] + self.row2[1] * [1][2] + self.row2[2] * [2][2] + A_row2_3 * [3][2],
+                self.row2[0] * B[0][0] + self.row2[1] * B[1][0] + self.row2[2] * B[2][0] + A_row2_3 * B[3][0],
+                self.row2[0] * B[0][1] + self.row2[1] * B[1][1] + self.row2[2] * B[2][1] + A_row2_3 * B[3][1],
+                self.row2[0] * B[0][2] + self.row2[1] * B[1][2] + self.row2[2] * B[2][2] + A_row2_3 * B[3][2],
                 ]
             C.row3 = [
-                self.row3[0] * [0][0] + self.row3[1] * [1][0] + self.row3[2] * [2][0] + A_row3_3 * [3][0],
-                self.row3[0] * [0][1] + self.row3[1] * [1][1] + self.row3[2] * [2][1] + A_row3_3 * [3][1],
-                self.row3[0] * [0][2] + self.row3[1] * [1][2] + self.row3[2] * [2][2] + A_row3_3 * [3][2]
+                self.row3[0] * B[0][0] + self.row3[1] * B[1][0] + self.row3[2] * B[2][0] + A_row3_3 * B[3][0],
+                self.row3[0] * B[0][1] + self.row3[1] * B[1][1] + self.row3[2] * B[2][1] + A_row3_3 * B[3][1],
+                self.row3[0] * B[0][2] + self.row3[1] * B[1][2] + self.row3[2] * B[2][2] + A_row3_3 * B[3][2]
                 ]
             C.row4 = [
-                self.row4[0] * [0][0] + self.row4[1] * [1][0] + self.row4[2] * [2][0] + A_row4_3 * [3][0],
-                self.row4[0] * [0][1] + self.row4[1] * [1][1] + self.row4[2] * [2][1] + A_row4_3 * [3][1],
-                self.row4[0] * [0][2] + self.row4[1] * [1][2] + self.row4[2] * [2][2] + A_row4_3 * [3][2]
+                self.row4[0] * B[0][0] + self.row4[1] * B[1][0] + self.row4[2] * B[2][0] + A_row4_3 * B[3][0],
+                self.row4[0] * B[0][1] + self.row4[1] * B[1][1] + self.row4[2] * B[2][1] + A_row4_3 * B[3][1],
+                self.row4[0] * B[0][2] + self.row4[1] * B[1][2] + self.row4[2] * B[2][2] + A_row4_3 * B[3][2]
                 ]
         return C
 
@@ -925,10 +925,18 @@ class skinOps:
         return None
 
 
+class boneInfo:
+    name = ""
+    matrix = None
+    def __init__(self, n="Bone", t=matrix3(1)):
+        name = n
+        matrix = t
+    
+
 class boneSys:
     armature = None
     layer = None
-
+    bone = []
     def __init__(self, armatureName="Skeleton", layerName="", rootName="Scene Root"):
 
         # Clear Any Object Selections
@@ -941,22 +949,27 @@ class boneSys:
                 # make collection
                 self.layer = bpy.data.collections.new(layerName)
                 bpy.context.scene.collection.children.link(self.layer)
-            else:
+            elif len(bpy.data.collections) > 0:
                 self.layer = bpy.data.collections[0]
+            else:
+                self.layer = bpy.data.collections.new("Collection")
+                bpy.context.scene.collection.children.link(self.layer)
 
+        
         # Check for Armature
-        armName = armatureName
-        if armatureName == "": armName = "Skeleton"
-        self.armature = bpy.context.scene.objects.get(armName)
-
         if self.armature == None:
-            # Create Root Bone
-            root = bpy.data.armatures.new(rootName)
-            root.name = rootName
-
-            # Create Armature
-            self.armature = bpy.data.objects.new(armName, root)
+            if armatureName == "": armatureName = "Skeleton"
+            self.armature = bpy.context.scene.objects.get(armatureName)
+        
+        
+        # Create Armature
+        if self.armature == None:
+            root = bpy.data.armatures.new(armatureName)
+            self.armature = bpy.data.objects.new(rootName, root)
             self.layer.objects.link(self.armature)
+ 
+    
+            
 
         self.armature.display_type = 'WIRE'
         self.armature.show_in_front = True
@@ -1029,7 +1042,7 @@ class boneSys:
                 self.armature.location[0] + b.head[0],
                 self.armature.location[1] + b.head[1],
                 self.armature.location[2] + b.head[2],
-            )
+                )
         return position
 
     def setPosition(self, boneName, position):
@@ -1038,8 +1051,13 @@ class boneSys:
             position[0] - self.armature.location[0],
             position[1] - self.armature.location[1],
             position[2] - self.armature.location[2]
-        )
-        if b != None and distance(b.tail, pos) > 0.0000001: b.head = pos
+            )
+        if b != None and distance(b.tail, pos) > 0.0000001:
+            b.head = pos
+            for i in self.bone:
+                if i.name == boneName:
+                    i.matrix.position(position)
+                    break
         return None
 
     def getEndPosition(self, boneName):
@@ -1081,27 +1099,37 @@ class boneSys:
                 pass
         return value
 
-    def setTransform(self, boneName,
-                     matrix=((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (1.0, 0.0, 0.0, 1.0))):
+    def setTransform(self, boneName, matrix=((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (1.0, 0.0, 0.0, 1.0))):
         b = self.getNodeByName(boneName)
         if b != None:
             b.matrix = matrix
+            for i in self.bone:
+                if i.name == boneName:
+                    i.matrix = matrix3(matrix)
+                    break
             return True
         return False
     
     def getTransform(self, boneName):
         # lol wtf does blender not store a transform for the bone???
+        # i just cache the transform in the class, getting it from the scene it retarded
+        
         mat=((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (1.0, 0.0, 0.0, 1.0))
-        b = self.getNodeByName(boneName)
-        if b != None:
-            mat = (
-                (b.matrix[0][0], b.matrix[0][1], b.matrix[0][2], 0.0),
-                (b.matrix[1][0], b.matrix[1][1], b.matrix[1][2], 0.0),
-                (b.matrix[2][0], b.matrix[2][1], b.matrix[2][2], 0.0),
-                (b.head[0] - self.armature.location[0],
-                b.head[1] - self.armature.location[1],
-                b.head[2] - self.armature.location[2], 1.0)
-                )
+        #b = self.getNodeByName(boneName)
+        #if b != None:
+        #    mat = (
+        #        (b.matrix[0][0], b.matrix[0][1], b.matrix[0][2], 0.0),
+        #        (b.matrix[1][0], b.matrix[1][1], b.matrix[1][2], 0.0),
+        #        (b.matrix[2][0], b.matrix[2][1], b.matrix[2][2], 0.0),
+        #        (b.head[0] - self.armature.location[0],
+        #        b.head[1] - self.armature.location[1],
+        #        b.head[2] - self.armature.location[2], 1.0)
+        #        )
+        
+        for i in self.bone:
+            if i.name == boneName:
+                mat = i.matrix.asMat4()
+                break
         return mat
 
     def setVisibility(self, boneName, visSet=(
@@ -1156,7 +1184,7 @@ class boneSys:
             b = self.armature.data.edit_bones.new(bName)
             # b = self.armature.data.edit_bones.new(bName.decode('utf-8', 'replace'))
             b.name = bName
-
+            
             # Set As Deform Bone
             b.use_deform = True
 
@@ -1190,8 +1218,11 @@ class boneSys:
                 (cv * sw, cu * cw + su * sv * sw, cu * sv * sw - su * cw, 0.0),
                 (-sv, su * cv, cu * cv, 0.0),
                 (startPos[0], startPos[1], startPos[2], 1.0)
-            )
-
+                )
+            
+            
+            self.bone.append(boneInfo(bName, b.matrix))
+            
             # Set Length (has to be larger then 0.1?)
             b.length = 1.0
             if startPos != endPos:
@@ -2132,9 +2163,15 @@ class nodeInfo:
     blockEndAddr = 0
 
 
-class bumFile:
+class bumFile ():
     arr = []
+    def __init__(self):
+        self.arr = []
+    
+    def __del__(self):
+        self.arr = []
 
+        
     def isBlockIDValid(self, f=fopen()):
         pos = ftell(f)
         state = True
@@ -2189,7 +2226,7 @@ class bumFile:
         s = ""
         isterm = False
         for i in range(0, len):
-            b = readByte(f)
+            b = readByte(f, unsigned)
             if b == 0: isterm = True
             if isterm == False: s += chr(b)
         return s
@@ -2222,13 +2259,14 @@ class bumFile:
                     p = ftell(f) + 0x32
                     filename = readString(f)
 
-                    if size > 0:
+                    if size > 0 and size <= f.size + addr:
                         if len(filename) > 0: sname = fpath + fname + "\\" + filename
                         else: sname = fpath + fname + "\\" + fname + "_file_" + ord(i + 1) + ".bin"
                         s = fopen(sname, "wbS")
                         fseek(f, addr, seek_set)
                         for b in range(0, size): writeByte(s, readByte(f, unsigned))
                         fclose(s)
+                    else: format("fileSkipped: \t%\n", (sname))
         fclose(f)
         os.remove(filen)
         return sdir
@@ -2506,6 +2544,8 @@ class bumFile:
                         if verbose == True: format("Material%: \t%\n", (fi, matDif))
                         
                 # read over the models / bones 
+                boneArray = boneSys(skelName)
+                boneTrans = []
                 for m in self.children(self.arr[i].blockIndex):
                     if self.arr[m].blockName == "NODE":
                         nodeName = "node " + str(self.arr[m].blockIndex)
@@ -2517,7 +2557,7 @@ class bumFile:
                         bonePaletteOffset = -1
                         boneMap2_tmp = []
                         boneMap2_count = 0
-                        boneArray = boneSys(skelName)
+                        bleb_m = matrix3(1)
                         for n in self.children(self.arr[m].blockIndex):
                             fseek(f, self.arr[n].blockAddr + 8, seek_set)
 
@@ -2545,17 +2585,12 @@ class bumFile:
                                 bonePaletteOffset = 1
 
                             elif self.arr[n].blockName == "BLEO":  # ?
-                                # matrix3 (
-                                #    :[readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    :[readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    :[readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    :[readFloat(f), readFloat(f), readFloat(f)] * readFloat(f)
-                                # matrix3 \
-                                #    [readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    [readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    [readFloat(f), readFloat(f), readFloat(f)] + readFloat(f) \
-                                #    [readFloat(f), readFloat(f), readFloat(f)] * readFloat(f)
-                                pass
+                                bleb_m = matrix3(
+                                    [readFloat(f), readFloat(f), readFloat(f), readFloat(f)],
+                                    [readFloat(f), readFloat(f), readFloat(f), readFloat(f)],
+                                    [readFloat(f), readFloat(f), readFloat(f), readFloat(f)],
+                                    [readFloat(f), readFloat(f), readFloat(f), readFloat(f)]
+                                    )
                             elif self.arr[n].blockName == "DRWP":
                                 readLong(f) # always 1 ?
                                 mesh_index = readLong(f, signed)  # mesh index
@@ -2563,13 +2598,14 @@ class bumFile:
                         
                         
                         # adjust rotation and scale
-                        trns = [trns[0] * mscale, -trns[2] * mscale, trns[1] * mscale]
-                        rotq = [rotq[0], -rotq[1], rotq[2], rotq[3]]
+                        trns = [trns[0] * mscale, trns[2] * -mscale, trns[1] * mscale]
+                        rotq = [rotq[0],          rotq[2] * -1.0,    rotq[1],           rotq[3]]
 
                         # Import the Bone
                         if mesh_index < 0:
                             
                             mat = matrix3(1)
+                            mat.position(trns)
                             dum = getNodeByName(nodeName)
                             if verbose == True: format("Bone %\t%\n", (len(dumArray) + 1, nodeName))
                             if dum == None:
@@ -2582,9 +2618,13 @@ class bumFile:
                                 # -------------------------- B O N E  E D I T  M O D E  O P E N E D -------------------------- #
                                 
                                 
+                                #mat = mat.multiply(quatToMatrix3(rotq))
                                 mat = transMatrix(trns)
-                                mat = mat.multiply(inverse(quatToMatrix3(rotq)))
+                                mat = mat.multiply(quatToMatrix3(rotq))
+                                mat.position(trns)
+                                
                                 if pare > -1 and pare < len(dumArray) and nodeName != dumArray[pare]:
+                                    #mat = mat.multiply(boneArray.getTransform(dumArray[pare]))
                                     mat = mat.multiply(boneTrans[pare])
                                     boneArray.setParent(nodeName, dumArray[pare])
                                 
@@ -2907,7 +2947,7 @@ class bumFile:
             elif verbose == True: format("Unknown Block0: %\n", (self.arr[i].blockName))
     
     
-    def openBumFile(self, filen="", impSkin=True, mscale = 0.1, skeletonName = "Skeleton"):
+    def openBumFile(self, filen="", impSkin=False, mscale = 0.1, skeletonName = "Skeleton"):
         
         state = True
         fileSize = 0
@@ -2918,8 +2958,8 @@ class bumFile:
         if filen != None and doesFileExist(filen):
             fileSize = getFileSize(filen)
             f = fopen(filen, "rb")
-            fileType = readLong(f)
-            if fileType == 0x4D55422E and readLong(f) == fileSize:
+            fileType = readLong(f, unsigned)
+            if fileType == 0x4D55422E and readLong(f, unsigned) == fileSize:
                 i = -1
                 while ftell(f) < fileSize and state:
                     state = self.readNode(f, indent, i)
@@ -2928,11 +2968,13 @@ class bumFile:
             else: format("invalid filetype {%}\n", (fileType))
             fclose(f)
         else: format("failed to open file {%}\n", (filen))
+        self.arr = []
         return state
 
 
 
 def read (filen = "", impSkin=True, mscale=0.1, skelName = "Skeleton"):
+    
     if filen != None and filen != "":
         bum = bumFile()
         
@@ -2942,14 +2984,16 @@ def read (filen = "", impSkin=True, mscale=0.1, skelName = "Skeleton"):
         
         if matchPattern(fext, pattern=".bum", ignoreCase=True):
             bum.openBumFile(filen, impSkin=impSkin, mscale=mscale, skeletonName=skelName)
+            
         elif matchPattern(fext, pattern=".lzs", ignoreCase=True):
-            print(filen + ".itsMuffinTime")
             sdir = bum.decode_lzs(filen, (filen + ".itsMuffinTime"))
             files = getFiles(sdir + "*.bum")
             for file in files:
                 bum.openBumFile(file, impSkin=impSkin, mscale=mscale, skeletonName=skelName)
             #messageBox("Done!")
         else: messageBox("Error: Unable to Open File")
+        del bum;
+    return None
     
 
 
@@ -2988,7 +3032,7 @@ def deleteScene(include=[]):
 def bumimp_callback(fpath="", files=[], clearScene=True, armName="Armature", impWeights=False, mscale=1.0):
     if len(files) > 0 and clearScene: deleteScene(['MESH', 'ARMATURE'])
     for file in files:
-         read (fpath + file.name, impSkin=impWeights, mscale=mscale, skelName = armName)
+        read (fpath + file.name, impSkin=impWeights, mscale=mscale, skelName = armName)
     if len(files) > 0:
         messageBox("Done!")
         return True
@@ -3090,7 +3134,7 @@ def bumimp(reload=False):
 
             # Run Callback
             bumimp_callback(
-                self.directory + "\\",
+                self.directory,
                 self.files,
                 self.my_bool1,
                 self.my_string1,
@@ -3159,10 +3203,12 @@ def bumimp(reload=False):
 clearListener()  # clears out console
 if not useOpenDialog:
 
-    
+    deleteScene(['MESH', 'ARMATURE'])
     bum = bumFile()
     bum.openBumFile (
-        "C:\\Users\\Corey\\Downloads\\research_test\\akiitm000_obj.bin"
+        #"E:\\BackUp\\MyCloud4100\\Coding\\Maxscripts\\File IO\\Shinobi Master Senran Kagura New Link\\cos_model\\ne453_model\\ne453_mdl.bum"
+        #"E:\\BackUp\\MyCloud4100\\Coding\\Maxscripts\\File IO\\Shinobi Master Senran Kagura New Link\\cos_model\\ne453_model\\ne453_mdl.bum"
+        "E:\\BackUp\\MyCloud4100\\Coding\\Maxscripts\\File IO\\Shinobi Master Senran Kagura New Link\\hair_model\\hr140_model\\hr140_mdl.bum"
         )
     messageBox("Done!")
 else: bumimp(True)
